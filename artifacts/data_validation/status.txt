@@ -1,0 +1,5 @@
+Dataset is not empty
+Duplicate rows: 0
+Total missing values: 144908
+Total '?' values: 154199
+Target column found
