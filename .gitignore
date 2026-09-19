@@ -1,0 +1,48 @@
+# Virtual Environment
+.venv/
+venv/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Environment Variables
+.env
+
+# Logs
+logs/
+*.log
+
+# MLflow
+mlruns/
+
+# Models
+models/
+*.pkl
+*.joblib
+
+# Data (keep folder, ignore dataset)
+artifacts/data/*.csv
+!artifacts/data/.gitkeep
+
+# Jupyter
+.ipynb_checkpoints/
+
+# VS Code
+.vscode/
+
+# Pytest
+.pytest_cache/
+
+# Coverage
+.coverage
+htmlcov/
+
+# DVC Cache
+.dvc/cache/
+
+# OS Files
+.DS_Store
+Thumbs.db
