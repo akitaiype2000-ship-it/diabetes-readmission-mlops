@@ -3,9 +3,17 @@ import json
 import joblib
 import numpy as np
 
+import mlflow
+import mlflow.sklearn
+
+from src.mlflow_utils import setup_mlflow
+from src.logger import logger
+from src.entity.config_entity import ModelTrainerConfig
+
 from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
+
 from sklearn.metrics import (
     accuracy_score,
     precision_score,
@@ -16,9 +24,6 @@ from sklearn.metrics import (
 from xgboost import XGBClassifier
 from lightgbm import LGBMClassifier
 
-from src.logger import logger
-from src.entity.config_entity import ModelTrainerConfig
-
 
 class ModelTrainer:
 
@@ -28,8 +33,15 @@ class ModelTrainer:
     def train(self):
 
         # Load transformed datasets
-        train = np.load(self.config.train_data_path, allow_pickle=True)
-        test = np.load(self.config.test_data_path, allow_pickle=True)
+        train = np.load(
+            self.config.train_data_path,
+            allow_pickle=True
+        )
+
+        test = np.load(
+            self.config.test_data_path,
+            allow_pickle=True
+        )
 
         logger.info("Transformed data loaded")
 
@@ -42,104 +54,206 @@ class ModelTrainer:
 
         # Models to compare
         models = {
-            "Logistic Regression": LogisticRegression(max_iter=1000),
 
-            "Decision Tree": DecisionTreeClassifier(
-                random_state=42
-            ),
+            "Logistic Regression":
+                LogisticRegression(
+                    max_iter=3000
+                ),
 
-            "Random Forest": RandomForestClassifier(
-                n_estimators=100,
-                random_state=42
-            ),
+            "Decision Tree":
+                DecisionTreeClassifier(
+                    random_state=42
+                ),
 
-            "XGBoost": XGBClassifier(
-                random_state=42,
-                eval_metric="logloss"
-            ),
+            "Random Forest":
+                RandomForestClassifier(
+                    n_estimators=100,
+                    random_state=42
+                ),
 
-            "LightGBM": LGBMClassifier(
-                random_state=42
-            )
+            "XGBoost":
+                XGBClassifier(
+                    random_state=42,
+                    eval_metric="logloss"
+                ),
+
+            "LightGBM":
+                LGBMClassifier(
+                    random_state=42
+                )
         }
 
-        # Dictionary to store evaluation metrics
+        setup_mlflow()
+
         results = {}
 
-        # Variables for best model
-        best_f1 = 0
         best_model = None
         best_model_name = ""
-
-        # Train and evaluate every model
+        best_f1 = 0
+                # Train every model
         for name, model in models.items():
 
             print(f"\nTraining {name}...")
 
-            model.fit(X_train, y_train)
+            with mlflow.start_run(run_name=name):
 
-            predictions = model.predict(X_test)
+                # Train model
+                model.fit(
+                    X_train,
+                    y_train
+                )
 
-            accuracy = accuracy_score(y_test, predictions)
+                # Predictions
+                predictions = model.predict(
+                    X_test
+                )
 
-            precision = precision_score(
-                y_test,
-                predictions,
-                zero_division=0
+                # Evaluation metrics
+                accuracy = accuracy_score(
+                    y_test,
+                    predictions
+                )
+
+                precision = precision_score(
+                    y_test,
+                    predictions,
+                    average="weighted",
+                    zero_division=0
+                )
+
+                recall = recall_score(
+                    y_test,
+                    predictions,
+                    average="weighted",
+                    zero_division=0
+                )
+
+                f1 = f1_score(
+                    y_test,
+                    predictions,
+                    average="weighted",
+                    zero_division=0
+                )
+
+                # Log metrics to MLflow
+                mlflow.log_metric(
+                    "accuracy",
+                    accuracy
+                )
+
+                mlflow.log_metric(
+                    "precision",
+                    precision
+                )
+
+                mlflow.log_metric(
+                    "recall",
+                    recall
+                )
+
+                mlflow.log_metric(
+                    "f1_score",
+                    f1
+                )
+
+                # Log hyperparameters
+                mlflow.log_params(
+                    model.get_params()
+                )
+
+                # Store metrics for comparison
+                results[name] = {
+
+                    "accuracy": round(
+                        accuracy,
+                        4
+                    ),
+
+                    "precision": round(
+                        precision,
+                        4
+                    ),
+
+                    "recall": round(
+                        recall,
+                        4
+                    ),
+
+                    "f1_score": round(
+                        f1,
+                        4
+                    )
+                }
+
+                print(f"\n{name}")
+                print(f"Accuracy : {accuracy:.4f}")
+                print(f"Precision: {precision:.4f}")
+                print(f"Recall   : {recall:.4f}")
+                print(f"F1 Score : {f1:.4f}")
+
+                # Save best model
+                if f1 > best_f1:
+
+                    best_f1 = f1
+                    best_model = model
+                    best_model_name = name
+
+                # Create output folder
+        os.makedirs(
+            self.config.root_dir,
+            exist_ok=True
+        )
+
+        # Save best model locally
+        joblib.dump(
+            best_model,
+            self.config.model_path
+        )
+
+        logger.info(
+            f"Best model saved: {best_model_name}"
+        )
+
+        # Log only the best model to MLflow
+        with mlflow.start_run(run_name="Best Model"):
+
+            mlflow.log_param(
+                "best_model",
+                best_model_name
             )
 
-            recall = recall_score(
-                y_test,
-                predictions,
-                zero_division=0
+            mlflow.log_metric(
+                "best_f1_score",
+                best_f1
             )
 
-            f1 = f1_score(
-                y_test,
-                predictions,
-                zero_division=0
+            mlflow.sklearn.log_model(
+                sk_model=best_model,
+                name="best_model",
+                serialization_format="pickle"
             )
 
-            # Store results
-            results[name] = {
-                "accuracy": round(accuracy, 4),
-                "precision": round(precision, 4),
-                "recall": round(recall, 4),
-                "f1_score": round(f1, 4)
-            }
-
-            print(f"\n{name}")
-            print(f"Accuracy : {accuracy:.4f}")
-            print(f"Precision: {precision:.4f}")
-            print(f"Recall   : {recall:.4f}")
-            print(f"F1 Score : {f1:.4f}")
-
-            # Select best model based on F1-score
-            if f1 > best_f1:
-                best_f1 = f1
-                best_model = model
-                best_model_name = name
-
-        # Create output directory
-        os.makedirs(self.config.root_dir, exist_ok=True)
-
-        # Save best model
-        joblib.dump(best_model, self.config.model_path)
-
-        # Save model comparison metrics
+        # Save comparison report
         metrics_path = os.path.join(
             self.config.root_dir,
             "model_scores.json"
         )
 
         with open(metrics_path, "w") as file:
-            json.dump(results, file, indent=4)
 
-        logger.info(f"Best model saved: {best_model_name}")
+            json.dump(
+                results,
+                file,
+                indent=4
+            )
+
+        logger.info(
+            "Model comparison report saved successfully."
+        )
 
         print("\n===================================")
         print(f"Best Model : {best_model_name}")
         print(f"Best F1 Score : {best_f1:.4f}")
         print("===================================")
 
-        print("\nModel comparison report saved successfully.")
+        print("\nModel comparison report saved successfully.")       
