@@ -2,8 +2,11 @@ import yaml
 
 from src.entity.config_entity import (
     DataIngestionConfig,
-    DataValidationConfig
+    DataValidationConfig,
+    DataTransformationConfig
 )
+
+from src.utils import create_directories
 
 
 class ConfigurationManager:
@@ -30,4 +33,17 @@ class ConfigurationManager:
         return DataValidationConfig(
             root_dir=config["root_dir"],
             STATUS_FILE=config["STATUS_FILE"],
+        )
+
+    def get_data_transformation_config(self):
+
+        config = self.config["data_transformation"]
+
+        create_directories([config["root_dir"]])
+
+        return DataTransformationConfig(
+            root_dir=config["root_dir"],
+            train_data_path=config["train_data_path"],
+            test_data_path=config["test_data_path"],
+            preprocessor_path=config["preprocessor_path"],
         )

@@ -46,3 +46,6 @@ htmlcov/
 # OS Files
 .DS_Store
 Thumbs.db
+
+artifacts/data_transformation/
+*.npy

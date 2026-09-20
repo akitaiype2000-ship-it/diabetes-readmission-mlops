@@ -27,3 +27,18 @@ data_validation = DataValidation(data_validation_config)
 data_validation.validate()
 
 print("Data Validation Completed Successfully!")
+
+
+from src.components.data_transformation import DataTransformation
+############################################
+# DATA TRANSFORMATION
+############################################
+
+transformation_config = config.get_data_transformation_config()
+
+data_transformation = DataTransformation(
+    transformation_config
+)
+
+data_transformation.transform()
+
