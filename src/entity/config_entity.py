@@ -24,3 +24,12 @@ class DataTransformationConfig:
     train_data_path: str
     test_data_path: str
     preprocessor_path: str
+
+from dataclasses import dataclass
+
+@dataclass(frozen=True)
+class ModelTrainerConfig:
+    root_dir: str
+    train_data_path: str
+    test_data_path: str
+    model_path: str

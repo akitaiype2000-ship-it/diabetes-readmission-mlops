@@ -1,7 +1,7 @@
 from src.configuration.configuration import ConfigurationManager
 from src.components.data_ingestion import DataIngestion
 from src.components.data_validation import DataValidation
-
+from src.components.model_trainer import ModelTrainer
 # Load configuration
 config = ConfigurationManager()
 
@@ -42,3 +42,12 @@ data_transformation = DataTransformation(
 
 data_transformation.transform()
 
+#########################################
+# MODEL TRAINING
+#########################################
+
+trainer_config = config.get_model_trainer_config()
+
+trainer = ModelTrainer(trainer_config)
+
+trainer.train()
