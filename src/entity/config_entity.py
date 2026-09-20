@@ -33,3 +33,13 @@ class ModelTrainerConfig:
     train_data_path: str
     test_data_path: str
     model_path: str
+
+from dataclasses import dataclass
+
+@dataclass(frozen=True)
+class ModelEvaluationConfig:
+    root_dir: str
+    model_path: str
+    test_data_path: str
+    metrics_file_name: str
+    classification_report_file: str

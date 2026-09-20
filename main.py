@@ -2,6 +2,7 @@ from src.configuration.configuration import ConfigurationManager
 from src.components.data_ingestion import DataIngestion
 from src.components.data_validation import DataValidation
 from src.components.model_trainer import ModelTrainer
+from src.components.model_evaluation import ModelEvaluation
 # Load configuration
 config = ConfigurationManager()
 
@@ -51,3 +52,15 @@ trainer_config = config.get_model_trainer_config()
 trainer = ModelTrainer(trainer_config)
 
 trainer.train()
+
+############################################
+# MODEL EVALUATION
+############################################
+
+evaluation_config = config.get_model_evaluation_config()
+
+model_evaluation = ModelEvaluation(
+    evaluation_config
+)
+
+model_evaluation.evaluate()

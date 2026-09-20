@@ -9,6 +9,7 @@ from src.entity.config_entity import (
 from src.utils import create_directories
 
 from src.entity.config_entity import ModelTrainerConfig
+from src.entity.config_entity import ModelEvaluationConfig
 class ConfigurationManager:
 
     def __init__(self):
@@ -59,3 +60,16 @@ class ConfigurationManager:
         test_data_path=config["test_data_path"],
         model_path=config["model_path"],
     )
+    def get_model_evaluation_config(self):
+
+        config = self.config["model_evaluation"]
+
+        create_directories([config["root_dir"]])
+
+        return ModelEvaluationConfig(
+    root_dir=config["root_dir"],
+    model_path=config["model_path"],
+    test_data_path=config["test_data_path"],
+    metrics_file_name=config["metrics_file_name"],
+    classification_report_file=config["classification_report_file"],
+)

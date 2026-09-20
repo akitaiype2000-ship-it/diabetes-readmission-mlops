@@ -32,11 +32,13 @@ class DataIngestion:
                 random_state=42
             )
 
+
+            print(repr(self.config.train_file))
+            print(repr(self.config.test_file))
             train.to_csv(
                 self.config.train_file,
                 index=False
             )
-
             test.to_csv(
                 self.config.test_file,
                 index=False
