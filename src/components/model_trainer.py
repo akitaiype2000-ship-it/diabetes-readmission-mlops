@@ -18,7 +18,9 @@ from sklearn.metrics import (
     accuracy_score,
     precision_score,
     recall_score,
-    f1_score
+    f1_score,
+    confusion_matrix,
+    classification_report
 )
 
 from xgboost import XGBClassifier
@@ -57,7 +59,11 @@ class ModelTrainer:
 
             "Logistic Regression":
                 LogisticRegression(
-                    max_iter=3000
+                    max_iter=1000,
+                    class_weight="balanced",
+                    solver="saga",
+                    verbose=1,
+                    random_state=42
                 ),
 
             "Decision Tree":
@@ -94,6 +100,9 @@ class ModelTrainer:
         for name, model in models.items():
 
             print(f"\nTraining {name}...")
+            print(f"Rows: {X_train.shape[0]}")
+            print(f"Columns: {X_train.shape[1]}")
+
 
             with mlflow.start_run(run_name=name):
 
@@ -107,6 +116,15 @@ class ModelTrainer:
                 predictions = model.predict(
                     X_test
                 )
+                # Confusion Matrix
+                cm = confusion_matrix(y_test, predictions)
+
+                print("\n========== CONFUSION MATRIX ==========")
+                print(cm)
+
+# Classification Report
+                print("\n========== CLASSIFICATION REPORT ==========")
+                print(classification_report(y_test, predictions))
 
                 # Evaluation metrics
                 accuracy = accuracy_score(
